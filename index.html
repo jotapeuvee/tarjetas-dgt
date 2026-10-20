@@ -99,8 +99,14 @@ const $ = s => document.querySelector(s);
 const ls = { get(k){ try { return localStorage.getItem(k); } catch(e){ return null; } }, set(k,v){ try { localStorage.setItem(k,v); } catch(e){} } };
 
 // La clave va en el enlace (#k=...). Se recuerda para abrir desde el icono de la pantalla de inicio.
-let CLAVE = (/[#&]k=([^&]+)/.exec(location.hash) || [])[1] || ls.get('dgt_k');
-if (CLAVE) ls.set('dgt_k', CLAVE);
+const claveDe = s => (/[#&?]k=([A-Za-z0-9_-]+)/.exec(s || '') || [])[1] || null;
+let CLAVE = claveDe(location.hash) || claveDe(location.search) || ls.get('dgt_k');
+function fijarClave(k){
+  CLAVE = k; ls.set('dgt_k', k);
+  // Deja la clave en la dirección para que "Añadir a pantalla de inicio" la conserve
+  if (claveDe(location.hash) !== k) history.replaceState(null, '', location.pathname + '?k=' + k + '#k=' + k);
+}
+if (CLAVE) fijarClave(CLAVE);
 
 let Q = [], UNIQ = [];
 let st; try { st = JSON.parse(ls.get(KEY)) || {}; } catch(e){ st = {}; }
@@ -268,10 +274,30 @@ document.addEventListener('keydown', e => {
   else if (k === 'p' && cur){ ask(); }
 });
 
-(async function init(){
-  if (!CLAVE){ $('#main').innerHTML = '<div class="card empty">Este enlace no es válido. Usa el enlace completo, con <b>#k=</b> al final.</div>'; return; }
+// Si falta la clave (p. ej. al abrir desde el icono de inicio), se pide una sola vez
+function pedirClave(msg){
+  $('#main').innerHTML = `<div class="card">
+    <p class="q" style="font-size:17px">Pega aquí tu enlace de Tarjetas DGT</p>
+    <p style="color:var(--muted);font-size:14px;margin:0 0 12px">${msg || 'Solo hace falta la primera vez en este dispositivo.'}</p>
+    <input id="kin" type="text" autocapitalize="off" autocomplete="off" spellcheck="false" placeholder="https://jotapeuvee.github.io/tarjetas-dgt/#k=…"
+      style="width:100%;padding:12px;border:1.5px solid var(--line);border-radius:10px;font:inherit;font-size:16px;background:var(--card);color:var(--ink)">
+    <button class="btn primary" id="kok" style="width:100%;margin-top:12px;padding:13px">Entrar</button>
+  </div>`;
+  const go = () => { const v = $('#kin').value.trim(), k = claveDe(v) || (/^[A-Za-z0-9_-]{10,}$/.test(v) ? v : null);
+    if (!k) { toast('Ese enlace no lleva la clave (#k=…)'); return; }
+    fijarClave(k); init(); };
+  $('#kok').onclick = go; $('#kin').onkeydown = e => { if (e.key === 'Enter') go(); };
+}
+
+async function init(){
+  if (!CLAVE){ pedirClave(); return; }
+  $('#main').innerHTML = '<div class="card empty">Cargando preguntas…</div>';
   try { Q = await cargarPreguntas(); }
-  catch(e){ $('#main').innerHTML = '<div class="card empty">No se pudieron abrir las preguntas. Comprueba que usas el enlace completo (con <b>#k=</b>) y que tienes conexión.</div>'; return; }
+  catch(e){
+    if (e && e.name === 'OperationError'){ ls.set('dgt_k', ''); CLAVE = null; history.replaceState(null, '', location.pathname); pedirClave('La clave no es correcta. Pega el enlace completo, con #k= al final.'); }
+    else $('#main').innerHTML = '<div class="card empty">No se pudieron cargar las preguntas. Comprueba que tienes conexión y vuelve a abrir.</div>';
+    return;
+  }
   // Las preguntas repetidas entre tests comparten progreso (clave = primera aparición)
   const firstKey = {};
   Q.forEach(q => { const t = q.q + '|' + q.opts.join('|'); q.k = firstKey[t] || (firstKey[t] = q.test + '-' + q.n); });
@@ -282,7 +308,8 @@ document.addEventListener('keydown', e => {
   testSel.hidden = modeSel.value !== 'test';
   render();
   pull();
-})();
+}
+init();
 </script>
 </body>
 </html>
