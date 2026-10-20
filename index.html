@@ -1,0 +1,288 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<meta name="referrer" content="no-referrer">
+<meta name="theme-color" content="#2f6fde">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Tarjetas DGT">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<title>Tarjetas DGT</title>
+<style>
+:root{
+  --bg:#f4f5f7; --card:#fff; --ink:#1d2330; --muted:#6b7280; --line:#e3e6ea;
+  --accent:#2f6fde; --ok:#1f9d55; --ok-bg:#e7f6ee; --bad:#d64545; --bad-bg:#fdecec;
+}
+@media (prefers-color-scheme: dark){ :root{
+  --bg:#14171c; --card:#1d2128; --ink:#e8eaee; --muted:#9aa3b0; --line:#2c323b;
+  --accent:#6b9cff; --ok:#43c47a; --ok-bg:#16301f; --bad:#ff6b6b; --bad-bg:#3a1c1c;
+}}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+header{position:sticky;top:0;z-index:5;background:var(--card);border-bottom:1px solid var(--line);padding-top:env(safe-area-inset-top)}
+.bar{max-width:760px;margin:0 auto;padding:10px 16px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.bar h1{font-size:17px;margin:0 auto 0 0;white-space:nowrap}
+select,button{font:inherit;color:inherit}
+select{padding:7px 8px;border:1px solid var(--line);border-radius:8px;background:var(--card);font-size:15px}
+.stats{max-width:760px;margin:0 auto;padding:0 16px 8px;display:flex;gap:6px 16px;font-size:13px;color:var(--muted);flex-wrap:wrap;align-items:center}
+.stats b{color:var(--ink)}
+.sync{margin-left:auto;font-size:12px}
+.sync.err{color:var(--bad)}
+.prog{height:4px;background:var(--line)} .prog i{display:block;height:100%;background:var(--accent);width:0;transition:width .3s}
+main{max-width:760px;margin:20px auto;padding:0 16px 40px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:22px;box-shadow:0 2px 10px rgba(0,0,0,.04)}
+.meta{font-size:12px;color:var(--muted);margin-bottom:8px;display:flex;justify-content:space-between;gap:8px}
+.q{font-size:19px;font-weight:600;margin:0 0 14px}
+.qimg{display:block;max-width:100%;max-height:260px;margin:0 auto 16px;border-radius:10px}
+.opt{display:flex;gap:10px;width:100%;text-align:left;padding:13px 14px;margin:8px 0;border:1.5px solid var(--line);border-radius:12px;background:transparent;cursor:pointer;line-height:1.4;touch-action:manipulation}
+@media (hover:hover){ .opt:hover:not(:disabled){border-color:var(--accent)} }
+.opt .l{font-weight:700;min-width:20px;color:var(--muted)}
+.opt:disabled{cursor:default}
+.opt.ok{border-color:var(--ok);background:var(--ok-bg)} .opt.ok .l{color:var(--ok)}
+.opt.bad{border-color:var(--bad);background:var(--bad-bg)} .opt.bad .l{color:var(--bad)}
+.verdict{font-weight:700;margin:14px 0 4px;font-size:17px}
+.verdict.ok{color:var(--ok)} .verdict.bad{color:var(--bad)}
+.exp{border-top:1px solid var(--line);margin-top:10px;padding-top:12px;white-space:pre-line;font-size:15px}
+.exp img{display:block;max-width:100%;border-radius:10px;margin-top:10px}
+.actions{display:flex;gap:10px;margin-top:18px}
+.btn{padding:11px 16px;border-radius:10px;border:1px solid var(--line);background:var(--card);cursor:pointer;font-weight:600;touch-action:manipulation}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff;margin-left:auto}
+.hint{font-size:12px;color:var(--muted);text-align:center;margin-top:14px}
+@media (hover:none){ .hint{display:none} }
+.toast{position:fixed;left:50%;bottom:calc(90px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:14px;opacity:0;transition:opacity .2s;pointer-events:none;width:max-content;max-width:90vw;text-align:center;z-index:20}
+.toast.on{opacity:1}
+.empty{text-align:center;color:var(--muted);padding:40px 16px}
+/* Móvil: botones abajo, siempre a mano con el pulgar */
+@media (max-width:640px){
+  .bar{padding:8px 12px}
+  .bar h1{font-size:16px;flex-basis:100%;margin:0}
+  .bar select{flex:1;min-width:0}
+  .stats{padding:0 12px 6px;font-size:12px}
+  main{margin:12px auto;padding:0 10px calc(96px + env(safe-area-inset-bottom))}
+  .card{padding:16px;border-radius:14px}
+  .q{font-size:17px}
+  .opt{padding:14px 12px}
+  .actions{position:fixed;left:0;right:0;bottom:0;margin:0;padding:10px 12px calc(10px + env(safe-area-inset-bottom));background:var(--card);border-top:1px solid var(--line);z-index:10}
+  .actions .btn{flex:1;padding:14px 10px;font-size:16px}
+  .actions .btn.primary{flex:1.4}
+  .actions .long{display:none}
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="bar">
+    <h1>Tarjetas DGT · Permiso B</h1>
+    <select id="mode" title="Modo">
+      <option value="mix">Repaso inteligente</option>
+      <option value="new">Solo no vistas</option>
+      <option value="wrong">Solo falladas</option>
+      <option value="all">Todas al azar</option>
+      <option value="test">Por test (en orden)</option>
+    </select>
+    <select id="testSel" title="Test" hidden></select>
+  </div>
+  <div class="stats"><span id="stats"></span><span class="sync" id="sync"></span></div>
+  <div class="prog"><i id="progbar"></i></div>
+</header>
+<main id="main"><div class="card empty">Cargando preguntas…</div></main>
+<div class="toast" id="toast"></div>
+<script>
+const API = 'https://script.google.com/macros/s/AKfycbxBiX3sGB0Ftle2uZMO88uvsiYMS1baZn9OPvGfYA-K153ph4bWB7HMWN0XVxNwgj8gBA/exec';
+const KEY = 'dgt_tarjetas_v1';
+const $ = s => document.querySelector(s);
+const ls = { get(k){ try { return localStorage.getItem(k); } catch(e){ return null; } }, set(k,v){ try { localStorage.setItem(k,v); } catch(e){} } };
+
+// La clave va en el enlace (#k=...). Se recuerda para abrir desde el icono de la pantalla de inicio.
+let CLAVE = (/[#&]k=([^&]+)/.exec(location.hash) || [])[1] || ls.get('dgt_k');
+if (CLAVE) ls.set('dgt_k', CLAVE);
+
+let Q = [], UNIQ = [];
+let st; try { st = JSON.parse(ls.get(KEY)) || {}; } catch(e){ st = {}; }
+st.p = st.p || {}; st.dirty = st.dirty || {};
+const save = () => ls.set(KEY, JSON.stringify(st));
+const id = q => q.k;
+const modeSel = $('#mode'), testSel = $('#testSel');
+let cur = null, answered = false, chosen = null, testIdx = st.testIdx || 0, recent = [];
+
+async function cargarPreguntas(){
+  const buf = await (await fetch('datos.bin', {cache:'no-cache'})).arrayBuffer();
+  const hash = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('tarjetas-dgt:' + CLAVE));
+  const key = await crypto.subtle.importKey('raw', hash, 'AES-GCM', false, ['decrypt']);
+  const plain = await crypto.subtle.decrypt({name:'AES-GCM', iv: buf.slice(0,12)}, key, buf.slice(12));
+  const txt = await new Response(new Blob([plain]).stream().pipeThrough(new DecompressionStream('gzip'))).text();
+  return JSON.parse(txt);
+}
+
+// ---------- Sincronización con Google (Apps Script) ----------
+let syncTimer = null, syncing = false;
+function syncMsg(t, err){ const e = $('#sync'); e.textContent = t; e.classList.toggle('err', !!err); }
+async function api(body, keepalive){
+  try { return await api1(body, keepalive); }
+  catch(e){ if (keepalive || /Clave/.test(e.message)) throw e; await new Promise(r => setTimeout(r, 1500)); return api1(body); }
+}
+async function api1(body, keepalive){
+  const r = await fetch(API, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify(Object.assign({k: CLAVE}, body)), keepalive: !!keepalive });
+  const j = await r.json(); if (!j.ok) throw new Error(j.error || 'Error'); return j;
+}
+async function pull(){
+  try {
+    syncMsg('☁ Sincronizando…');
+    const j = await api({action:'cargar'});
+    for (const [k, v] of Object.entries(j.p || {})){
+      const loc = st.p[k];
+      if (!loc || (loc.ts || 0) < (v.ts || 0)){ st.p[k] = v; delete st.dirty[k]; }
+      else if ((loc.ts || 0) > (v.ts || 0)) st.dirty[k] = 1;
+    }
+    for (const k of Object.keys(st.p)) if (!(k in (j.p || {}))) st.dirty[k] = 1;
+    save(); stats();
+    if (Object.keys(st.dirty).length) await push(); else syncMsg('☁ Guardado');
+  } catch(e){ syncMsg('⚠ Sin conexión: se guarda en este dispositivo', true); }
+}
+async function push(keepalive){
+  const keys = Object.keys(st.dirty); if (!keys.length || syncing) return;
+  syncing = true; syncMsg('☁ Guardando…');
+  const data = {}; keys.forEach(k => data[k] = st.p[k]);
+  try {
+    await api({action:'guardar', data}, keepalive);
+    keys.forEach(k => { if (st.p[k] === data[k]) delete st.dirty[k]; }); save();
+    syncMsg('☁ Guardado');
+  } catch(e){ syncMsg('⚠ Sin conexión: se guarda en este dispositivo', true); }
+  syncing = false;
+  if (Object.keys(st.dirty).length && !keepalive) schedulePush(8000);
+}
+function schedulePush(ms){ clearTimeout(syncTimer); syncTimer = setTimeout(() => push(), ms || 1500); }
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') push(true);
+  else if (Q.length) pull();
+});
+window.addEventListener('online', () => push());
+
+// ---------- Tarjetas ----------
+function pool(mode){
+  if (mode === 'new') return UNIQ.filter(q => !st.p[id(q)]);
+  if (mode === 'wrong') return UNIQ.filter(q => st.p[id(q)] && st.p[id(q)].last === 'ko');
+  return UNIQ;
+}
+function weight(q){
+  const p = st.p[id(q)];
+  if (!p) return 4;                       // nunca vista
+  if (p.last === 'ko') return 10;         // fallada la última vez
+  return Math.max(0.15, 2 / (1 + p.streak * 2)); // acertadas: cada vez menos
+}
+function pick(){
+  const mode = modeSel.value;
+  if (mode === 'test'){
+    const list = Q.filter(q => q.test == testSel.value);
+    if (testIdx >= list.length) testIdx = 0;
+    return list[testIdx];
+  }
+  let list = pool(mode).filter(q => !recent.includes(id(q)));
+  if (!list.length) list = pool(mode);
+  if (!list.length) return null;
+  if (mode === 'mix'){
+    let tot = list.reduce((a,q)=>a+weight(q),0), r = Math.random()*tot;
+    for (const q of list){ r -= weight(q); if (r <= 0) return q; }
+    return list[list.length-1];
+  }
+  return list[Math.floor(Math.random()*list.length)];
+}
+function esc(s){ return String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+function render(){
+  cur = pick(); answered = false; chosen = null;
+  const m = $('#main');
+  if (!cur){ m.innerHTML = `<div class="card empty">${modeSel.value==='wrong' ? '¡No tienes preguntas falladas pendientes! 🎉' : 'No quedan preguntas en este modo.'}</div>`; stats(); return; }
+  const p = st.p[id(cur)];
+  const tag = !p ? 'Nueva' : p.last === 'ko' ? `Fallada ${p.ko}×` : `Acertada ${p.ok}×`;
+  m.innerHTML = `<div class="card">
+    <div class="meta"><span>Test ${cur.test} · Pregunta ${cur.n}</span><span>${tag}</span></div>
+    <p class="q">${esc(cur.q)}</p>
+    ${cur.img ? `<img class="qimg" src="${cur.img}" alt="">` : ''}
+    <div id="opts">${cur.opts.map((o,i)=>`<button class="opt" data-i="${i}"><span class="l">${'abc'[i]})</span><span>${esc(o)}</span></button>`).join('')}</div>
+    <div id="after"></div>
+    <div class="actions">
+      <button class="btn" id="ask">💬 Preguntar<span class="long"> a Claude</span></button>
+      <button class="btn primary" id="next">Saltar →</button>
+    </div>
+  </div>
+  <p class="hint">Teclas: A / B / C (o 1 / 2 / 3) para responder · Espacio o Enter para siguiente · P para preguntar</p>`;
+  m.querySelectorAll('.opt').forEach(b => b.onclick = () => answer(+b.dataset.i));
+  $('#next').onclick = next; $('#ask').onclick = ask;
+  stats(); window.scrollTo({top:0});
+}
+function answer(i){
+  if (answered) return; answered = true; chosen = i;
+  const ok = i === cur.correct;
+  document.querySelectorAll('.opt').forEach((b,j) => {
+    b.disabled = true;
+    if (j === cur.correct) b.classList.add('ok');
+    else if (j === i) b.classList.add('bad');
+  });
+  const k = id(cur), p = Object.assign({s:0, ok:0, ko:0, streak:0}, st.p[k]);
+  p.s++; if (ok){ p.ok++; p.streak++; p.last='ok'; } else { p.ko++; p.streak=0; p.last='ko'; }
+  p.ts = Date.now();
+  st.p[k] = p; st.dirty[k] = 1; save(); schedulePush();
+  recent.push(k); if (recent.length > 15) recent.shift();
+  const ex = (cur.expImgs||[]).map(s => `<img loading="lazy" src="${s}" alt="" onerror="this.remove()">`).join('');
+  $('#after').innerHTML = `<div class="verdict ${ok?'ok':'bad'}">${ok ? '✔ ¡Correcto!' : '✘ Incorrecto — la buena es la ' + 'abc'[cur.correct] + ')'}</div>
+    ${cur.exp ? `<div class="exp">${esc(cur.exp)}${ex}</div>` : ''}`;
+  $('#next').textContent = 'Siguiente →';
+  stats();
+}
+function next(){ if (modeSel.value === 'test'){ testIdx++; st.testIdx = testIdx; save(); } render(); }
+function ask(){
+  const L = 'abc';
+  let t = `Duda del test DGT (Test ${cur.test}, pregunta ${cur.n}):\n\n${cur.q}\n` +
+    cur.opts.map((o,i)=>`${L[i]}) ${o}`).join('\n') +
+    `\n\nRespuesta correcta: ${L[cur.correct]})`;
+  if (chosen !== null && answered) t += `\nYo respondí: ${L[chosen]})`;
+  if (cur.exp) t += `\n\nExplicación de Todo Test:\n${cur.exp}`;
+  t += `\n\nMi duda: `;
+  const done = () => toast('Copiado. Pégalo en el chat con Claude y escribe tu duda al final.');
+  if (navigator.clipboard && window.isSecureContext) navigator.clipboard.writeText(t).then(done, () => fallback(t, done)); else fallback(t, done);
+}
+function fallback(t, cb){ const a = document.createElement('textarea'); a.value = t; a.setAttribute('readonly',''); a.style.cssText='position:fixed;top:0;opacity:0'; document.body.appendChild(a); a.select(); a.setSelectionRange(0, t.length); document.execCommand('copy'); a.remove(); cb(); }
+function toast(s){ const e = $('#toast'); e.textContent = s; e.classList.add('on'); clearTimeout(toast.t); toast.t = setTimeout(()=>e.classList.remove('on'), 2600); }
+function stats(){
+  if (!Q.length) return;
+  const vals = UNIQ.map(q => st.p[id(q)]).filter(Boolean), seen = vals.length, ok = vals.filter(p=>p.last==='ok').length, ko = seen - ok;
+  const tot = UNIQ.length;
+  let extra = '';
+  if (modeSel.value === 'test'){ const n = Q.filter(q=>q.test==testSel.value).length; extra = ` · Pregunta <b>${Math.min(testIdx+1,n)}/${n}</b>`; }
+  $('#stats').innerHTML = `Vistas <b>${seen}/${tot}</b> · Dominadas <b>${ok}</b> · Por repasar <b>${ko}</b>${extra}`;
+  $('#progbar').style.width = (tot ? ok/tot*100 : 0) + '%';
+}
+modeSel.onchange = () => { st.mode = modeSel.value; testSel.hidden = modeSel.value !== 'test'; save(); recent = []; render(); };
+testSel.onchange = () => { st.test = testSel.value; testIdx = 0; st.testIdx = 0; save(); render(); };
+document.addEventListener('keydown', e => {
+  if (!Q.length || e.target.tagName === 'SELECT' || e.ctrlKey || e.metaKey || e.altKey) return;
+  const k = e.key.toLowerCase(), m = {a:0,b:1,c:2,'1':0,'2':1,'3':2};
+  if (!answered && k in m && cur && m[k] < cur.opts.length){ answer(m[k]); e.preventDefault(); }
+  else if (k === ' ' || k === 'enter'){ next(); e.preventDefault(); }
+  else if (k === 'p' && cur){ ask(); }
+});
+
+(async function init(){
+  if (!CLAVE){ $('#main').innerHTML = '<div class="card empty">Este enlace no es válido. Usa el enlace completo, con <b>#k=</b> al final.</div>'; return; }
+  try { Q = await cargarPreguntas(); }
+  catch(e){ $('#main').innerHTML = '<div class="card empty">No se pudieron abrir las preguntas. Comprueba que usas el enlace completo (con <b>#k=</b>) y que tienes conexión.</div>'; return; }
+  // Las preguntas repetidas entre tests comparten progreso (clave = primera aparición)
+  const firstKey = {};
+  Q.forEach(q => { const t = q.q + '|' + q.opts.join('|'); q.k = firstKey[t] || (firstKey[t] = q.test + '-' + q.n); });
+  UNIQ = Q.filter(q => q.k === q.test + '-' + q.n);
+  const tests = [...new Set(Q.map(q => q.test))].sort((a,b)=>a-b);
+  testSel.innerHTML = tests.map(t => `<option value="${t}">Test ${t}</option>`).join('');
+  modeSel.value = st.mode || 'mix'; testSel.value = st.test || tests[0];
+  testSel.hidden = modeSel.value !== 'test';
+  render();
+  pull();
+})();
+</script>
+</body>
+</html>
