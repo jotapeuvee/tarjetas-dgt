@@ -15,11 +15,11 @@
 <style>
 :root{
   --bg:#f4f5f7; --card:#fff; --ink:#1d2330; --muted:#6b7280; --line:#e3e6ea;
-  --accent:#2f6fde; --ok:#1f9d55; --ok-bg:#e7f6ee; --bad:#d64545; --bad-bg:#fdecec;
+  --accent:#2f6fde; --ok:#15803d; --ok-bg:#bbf7d0; --ok-ink:#14532d; --bad:#dc2626; --bad-bg:#fecaca; --bad-ink:#7f1d1d;
 }
 @media (prefers-color-scheme: dark){ :root{
   --bg:#14171c; --card:#1d2128; --ink:#e8eaee; --muted:#9aa3b0; --line:#2c323b;
-  --accent:#6b9cff; --ok:#43c47a; --ok-bg:#16301f; --bad:#ff6b6b; --bad-bg:#3a1c1c;
+  --accent:#6b9cff; --ok:#22c55e; --ok-bg:#14532d; --ok-ink:#dcfce7; --bad:#f87171; --bad-bg:#7f1d1d; --bad-ink:#fee2e2;
 }}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html{-webkit-text-size-adjust:100%}
@@ -43,8 +43,10 @@ main{max-width:760px;margin:20px auto;padding:0 16px 40px}
 @media (hover:hover){ .opt:hover:not(:disabled){border-color:var(--accent)} }
 .opt .l{font-weight:700;min-width:20px;color:var(--muted)}
 .opt:disabled{cursor:default}
-.opt.ok{border-color:var(--ok);background:var(--ok-bg)} .opt.ok .l{color:var(--ok)}
-.opt.bad{border-color:var(--bad);background:var(--bad-bg)} .opt.bad .l{color:var(--bad)}
+.opt.ok,.opt.bad{border-width:2.5px;font-weight:600}
+.opt.ok{border-color:var(--ok);background:var(--ok-bg);color:var(--ok-ink)} .opt.ok .l{color:var(--ok-ink)}
+.opt.bad{border-color:var(--bad);background:var(--bad-bg);color:var(--bad-ink)} .opt.bad .l{color:var(--bad-ink)}
+.opt:disabled:not(.ok):not(.bad){opacity:.55}
 .verdict{font-weight:700;margin:14px 0 4px;font-size:17px}
 .verdict.ok{color:var(--ok)} .verdict.bad{color:var(--bad)}
 .exp{border-top:1px solid var(--line);margin-top:10px;padding-top:12px;white-space:pre-line;font-size:15px}
